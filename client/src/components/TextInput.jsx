@@ -11,7 +11,7 @@ function TextInput({ content, onContentChange, onTranslate, isTranslating }) {
         placeholder="Enter your blog content here..."
         size="lg"
         minH="200px"
-        className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="w-full p-4 border text-gray-700 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
       <Button
         onClick={onTranslate}

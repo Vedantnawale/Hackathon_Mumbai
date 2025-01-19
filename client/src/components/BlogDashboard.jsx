@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Box, Container, VStack, useToast } from '@chakra-ui/react';
+import { Box, Container, VStack, useToast, Select, Button, Textarea } from '@chakra-ui/react';
 import TextInput from './TextInput';
 import VideoInput from './VideoInput';
-import TranslationProgress from './TranslationProgress';
+import BlogEditor from './BlogEditor';
+import BlogPreview from './BlogPreview';
 import { translateContent } from '../services/gemini';
 
 const SUPPORTED_LANGUAGES = [
@@ -18,10 +19,15 @@ const SUPPORTED_LANGUAGES = [
   { code: 'or', name: 'Odia' }
 ];
 
-function BlogDashboard() {
+function BlogDashboard({ onPublish }) {
   const [content, setContent] = useState('');
   const [translations, setTranslations] = useState({});
+  const [selectedLanguage, setSelectedLanguage] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
+  const [editableTranslation, setEditableTranslation] = useState('');
+  const [showEditor, setShowEditor] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [blogData, setBlogData] = useState(null);
   const toast = useToast();
 
   const handleContentChange = (newContent) => {
@@ -47,8 +53,10 @@ function BlogDashboard() {
         const translated = await translateContent(content, lang.name);
         newTranslations[lang.code] = translated;
       }
-      
+
       setTranslations(newTranslations);
+      setSelectedLanguage(SUPPORTED_LANGUAGES[0].code);
+      setEditableTranslation(newTranslations[SUPPORTED_LANGUAGES[0].code]);
       toast({
         title: 'Success',
         description: 'Content translated successfully',
@@ -67,6 +75,72 @@ function BlogDashboard() {
     }
   };
 
+  const handleLanguageChange = (event) => {
+    const selectedLang = event.target.value;
+    setSelectedLanguage(selectedLang);
+    setEditableTranslation(translations[selectedLang] || '');
+  };
+
+  const handleEditableTranslationChange = (event) => {
+    setEditableTranslation(event.target.value);
+  };
+
+  const handleShare = () => {
+    setShowEditor(true);
+  };
+
+  const handleEditorSubmit = (data) => {
+    setBlogData({
+      ...data,
+      content: editableTranslation,
+      language: selectedLanguage
+    });
+    setShowEditor(false);
+    setShowPreview(true);
+  };
+
+  const handlePublish = () => {
+    onPublish(blogData);
+    setShowPreview(false);
+    toast({
+      title: 'Published!',
+      description: 'Your blog has been published successfully.',
+      status: 'success',
+      duration: 3000,
+    });
+  };
+
+  if (showPreview) {
+    return (
+      <Container maxW="container.xl" py={8}>
+        <VStack spacing={8}>
+          <BlogPreview blog={blogData} />
+          <Button colorScheme="blue" onClick={handlePublish}>
+            Publish Blog
+          </Button>
+          <Button onClick={() => setShowPreview(false)}>
+            Back to Editor
+          </Button>
+        </VStack>
+      </Container>
+    );
+  }
+
+  if (showEditor) {
+    return (
+      <Container maxW="container.xl" py={8}>
+        <BlogEditor
+          initialContent={editableTranslation}
+          language={selectedLanguage}
+          onPublish={handleEditorSubmit}
+        />
+        <Button mt={4} onClick={() => setShowEditor(false)}>
+          Back to Translation
+        </Button>
+      </Container>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-12">
       <Container maxW="container.xl">
@@ -79,7 +153,7 @@ function BlogDashboard() {
               Create and translate content in 10 Indian languages
             </p>
           </div>
-          
+
           <Box className="w-full bg-white rounded-xl shadow-lg p-6">
             <TextInput 
               content={content}
@@ -88,17 +162,38 @@ function BlogDashboard() {
               isTranslating={isTranslating}
             />
           </Box>
-          
+
+          <Box className="w-full bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-800">Translations</h2>
+
+            <Select placeholder="Select Language" value={selectedLanguage} onChange={handleLanguageChange} mt={4}>
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code}>{lang.name}</option>
+              ))}
+            </Select>
+
+            {selectedLanguage && (
+              <Textarea
+                value={editableTranslation}
+                onChange={handleEditableTranslationChange}
+                mt={4}
+                minH="150px"
+                placeholder="Translated text will appear here..."
+              />
+            )}
+
+            <Button
+              mt={4}
+              colorScheme="blue"
+              onClick={handleShare}
+              isDisabled={!editableTranslation}
+            >
+              Continue to Editor
+            </Button>
+          </Box>
+
           <Box className="w-full bg-white rounded-xl shadow-lg p-6">
             <VideoInput onTranscriptionComplete={handleContentChange} />
-          </Box>
-          
-          <Box className="w-full bg-white rounded-xl shadow-lg p-6">
-            <TranslationProgress 
-              translations={translations}
-              languages={SUPPORTED_LANGUAGES}
-              isTranslating={isTranslating}
-            />
           </Box>
         </VStack>
       </Container>

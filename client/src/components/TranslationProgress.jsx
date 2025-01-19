@@ -3,9 +3,9 @@ import { Progress } from '@chakra-ui/react';
 
 function TranslationProgress({ translations, languages, isTranslating }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 b">
       <h2 className="text-xl font-semibold text-gray-800">Translations</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 text-gray-100 md:grid-cols-2 gap-4">
         {languages.map((lang) => (
           <div
             key={lang.code}
